@@ -1,4 +1,5 @@
 # SimplyEconomy
+SimplyEconomy is a library for convenient management of simple economics. You can use it when creating a discord bot or in other projects. Below you can see an example of use
 ```java
 public class Tests implements IEventListener {
     public static void main(String[] args) throws Exception {
