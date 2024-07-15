@@ -1,6 +1,9 @@
 package net.meawmere.SimplyEconomy;
 
 import net.meawmere.SimplyEconomy.Events.IEventListener;
+import net.meawmere.SimplyEconomy.Events.source.AddMoney;
+import net.meawmere.SimplyEconomy.Events.source.RemoveMoney;
+import net.meawmere.SimplyEconomy.Events.source.SetMoney;
 import net.meawmere.SimplyEconomy.Events.source.Transfer;
 
 import java.sql.*;
@@ -30,7 +33,67 @@ public class SQLSimplyEconomy {
         this.listeners = listeners;
     }
 
-    public SQLSimplyEconomy transfer(String userFrom, String userTo, Float amount) {
+    public SQLSimplyEconomy add(String user, Float amount) throws Exception {
+        try (Connection connection = DriverManager.getConnection(path);
+             Statement statement = connection.createStatement()){
+            statement.executeUpdate(String.format(
+                    "UPDATE %s SET %s = %s + %s WHERE %s = %s",
+                    executeSet, executeSetColumn, executeSetColumn, amount, executeSetColumnUser, user
+            ));
+
+            for (IEventListener listener:listeners) {
+                listener.onAddMoney(new AddMoney(user, amount));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return (new SQLSimplyEconomy(executeSet, executeSetColumn, executeSetColumnUser,
+                executeRemove, executeRemoveColumn, executeRemoveColumnUser,
+                path, listeners));
+    }
+
+    public SQLSimplyEconomy remove(String user, Float amount) throws Exception {
+        try (Connection connection = DriverManager.getConnection(path);
+             Statement statement = connection.createStatement()){
+            statement.executeUpdate(String.format(
+                    "UPDATE %s SET %s = %s - %s WHERE %s = %s",
+                    executeSet, executeSetColumn, executeSetColumn, amount, executeSetColumnUser, user
+            ));
+
+            for (IEventListener listener:listeners) {
+                listener.onRemoveMoney(new RemoveMoney(user, amount));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return (new SQLSimplyEconomy(executeSet, executeSetColumn, executeSetColumnUser,
+                executeRemove, executeRemoveColumn, executeRemoveColumnUser,
+                path, listeners));
+    }
+
+    public SQLSimplyEconomy set(String user, Float amount) throws Exception {
+        try (Connection connection = DriverManager.getConnection(path);
+             Statement statement = connection.createStatement()){
+            statement.executeUpdate(String.format(
+                    "UPDATE %s SET %s = %s WHERE %s = %s",
+                    executeSet, executeSetColumn, amount, executeSetColumnUser, user
+            ));
+
+            for (IEventListener listener:listeners) {
+                listener.onSetMoney(new SetMoney(user, amount));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return (new SQLSimplyEconomy(executeSet, executeSetColumn, executeSetColumnUser,
+                executeRemove, executeRemoveColumn, executeRemoveColumnUser,
+                path, listeners));
+    }
+
+    public SQLSimplyEconomy transfer(String userFrom, String userTo, Float amount) throws Exception {
         try (Connection connection = DriverManager.getConnection(path);
              Statement statement = connection.createStatement()){
             ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE %s = %s",
