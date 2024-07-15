@@ -36,11 +36,21 @@ public class SQLSimplyEconomy {
             ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE %s = %s",
                     executeRemoveColumn, executeRemove, executeRemoveColumnUser, userFrom));
             while (rs.next()) {
-                System.out.println(rs.getString(executeRemoveColumn));
-            }
-
-            for (IEventListener listener : listeners) {
-                listener.onTransfer(new Transfer(userFrom, userTo, amount));
+                if (rs.getFloat(executeRemoveColumn) < amount) {
+                    throw new RuntimeException("The user's balance is less than necessary");
+                } else {
+                    statement.executeUpdate(String.format(
+                            "UPDATE %S SET %s = %s + %s WHERE %s = %s",
+                            executeSet, executeSetColumn, executeSetColumn, amount, executeSetColumnUser, userTo
+                    ));
+                    statement.executeUpdate(String.format(
+                            "UPDATE %S SET %s = %s - %s WHERE %s = %s",
+                            executeRemove, executeRemoveColumn, executeRemoveColumn, amount, executeRemoveColumnUser, userFrom
+                    ));
+                    for (IEventListener listener : listeners) {
+                        listener.onTransfer(new Transfer(userFrom, userTo, amount));
+                    }
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);

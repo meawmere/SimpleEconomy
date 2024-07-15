@@ -73,6 +73,11 @@ public class SQLSimplyEconomyBuilder {
         if (Objects.equals(executeSet, "") || Objects.equals(executeRemove, "")) {
             throw new RuntimeException("The table to add or remove cannot be empty!");
         }
+
+        for (IEventListener listener : listeners) {
+            listener.onReady();
+        }
+
         return (new SQLSimplyEconomy(executeSet, executeSetColumn, executeSetColumnUser,
                 executeRemove, executeRemoveColumn, executeRemoveColumnUser,
                 path, listeners));
